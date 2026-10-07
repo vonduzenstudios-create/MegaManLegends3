@@ -23,7 +23,8 @@ npm run build    # typecheck + production build into dist/
 | Jump    | Space                | A            |
 | Buster  | Left click           | X or RT      |
 | Lock-on | Right click (hold) or Left Shift | LT (hold) |
-| Kick    | E                    | B            |
+| Kick (Mega Man) / wrench swing (Roll) | E | B |
+| Talk / inspect | F             | Y            |
 
 ## Layout
 
@@ -33,6 +34,6 @@ npm run build    # typecheck + production build into dist/
 ## Roadmap
 
 1. **Foundation** — player controller, cel shading, buster, kick, lock-on, test area ✅
-2. **The world** — Flutter crash site, grassy path, Apple Market with the can and town theme
+2. **The world** — character select (Mega Man or Roll), Flutter crash site, grassy path, Apple Market with townsfolk, the kickable can and its town theme, sealed ruin entrance ✅
 3. **The ruin and boss** — Reaverbots, zenny, special weapon, giant Reaverbot boss
 4. **Polish and ship** — title screen, game over, sound pass, GitHub Pages

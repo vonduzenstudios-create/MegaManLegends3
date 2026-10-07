@@ -88,3 +88,149 @@ body {
   border: 2px solid #fff;
   border-radius: 8px;
 }
+
+[hidden] {
+  display: none !important;
+}
+
+#area-name {
+  position: absolute;
+  top: 18%;
+  width: 100%;
+  text-align: center;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+#area-name.show {
+  opacity: 1;
+}
+
+#prompt {
+  position: absolute;
+  left: 50%;
+  top: 62%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid #fff;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  display: none;
+}
+
+#dialog {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+  transform: translateX(-50%);
+  width: min(720px, 90vw);
+  min-height: 92px;
+  padding: 14px 20px 18px;
+  background: rgba(10, 28, 64, 0.88);
+  border: 3px solid #cfe6ff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  font-size: 19px;
+  line-height: 1.45;
+}
+
+#dialog-name {
+  color: #ffd94a;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+#dialog-next {
+  position: absolute;
+  right: 14px;
+  bottom: 6px;
+  font-size: 12px;
+  opacity: 0.75;
+  animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+#select {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 5vh 16px 3vh;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(rgba(10, 30, 70, 0.55), transparent 30%, transparent 62%, rgba(10, 30, 70, 0.7));
+}
+
+.select-title {
+  text-align: center;
+}
+
+.logo {
+  font-size: clamp(30px, 6vw, 64px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #ffe14a;
+  -webkit-text-stroke: 2px #1a3a8a;
+  text-shadow: 0 4px 0 #1a3a8a;
+}
+
+.sub {
+  margin-top: 6px;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cards {
+  margin-top: auto;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  width: 280px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  background: rgba(10, 28, 64, 0.75);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.card.active {
+  border-color: #ffe14a;
+  transform: translateY(-4px) scale(1.04);
+}
+
+.card .name {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.card .tag {
+  margin-top: 4px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.select-help {
+  font-size: 14px;
+  opacity: 0.85;
+}

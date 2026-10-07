@@ -7,6 +7,7 @@ interface Particle {
   maxLife: number;
   size: number;
   gravity: number;
+  grow: boolean;
 }
 
 const sparkGeo = new THREE.IcosahedronGeometry(1, 0);
@@ -22,10 +23,11 @@ export class Effects {
     let p = this.pool.pop();
     if (!p) {
       const mesh = new THREE.Mesh(sparkGeo, new THREE.MeshBasicMaterial({ transparent: true }));
-      p = { mesh, vel: new THREE.Vector3(), life: 0, maxLife: 1, size: 1, gravity: 0 };
+      p = { mesh, vel: new THREE.Vector3(), life: 0, maxLife: 1, size: 1, gravity: 0, grow: false };
     }
     (p.mesh.material as THREE.MeshBasicMaterial).color.set(color);
     p.mesh.position.copy(pos);
+    p.grow = false;
     this.scene.add(p.mesh);
     this.active.push(p);
     return p;
@@ -52,6 +54,18 @@ export class Effects {
     this.burst(pos, { count, color: 0xd8cfb0, speed: 2, size: 0.1, life: 0.4, gravity: 1 });
   }
 
+  /** One rising, swelling smoke puff. Call every frame for a plume. */
+  smoke(pos: THREE.Vector3, color: THREE.ColorRepresentation = 0x555055) {
+    const p = this.spawn(pos, color);
+    p.mesh.position.x += (Math.random() - 0.5) * 0.6;
+    p.mesh.position.z += (Math.random() - 0.5) * 0.6;
+    p.vel.set((Math.random() - 0.5) * 0.4 + 0.5, 1.6 + Math.random() * 0.8, (Math.random() - 0.5) * 0.4);
+    p.life = p.maxLife = 2.5 + Math.random();
+    p.size = 0.35 + Math.random() * 0.25;
+    p.gravity = 0.2;
+    p.grow = true;
+  }
+
   update(dt: number) {
     for (let i = this.active.length - 1; i >= 0; i--) {
       const p = this.active[i];
@@ -65,8 +79,8 @@ export class Effects {
       p.vel.y += p.gravity * dt;
       p.mesh.position.addScaledVector(p.vel, dt);
       const t = p.life / p.maxLife;
-      p.mesh.scale.setScalar(p.size * (0.4 + 0.6 * t));
-      (p.mesh.material as THREE.MeshBasicMaterial).opacity = Math.min(1, t * 1.5);
+      p.mesh.scale.setScalar(p.grow ? p.size * (1 + (1 - t) * 3) : p.size * (0.4 + 0.6 * t));
+      (p.mesh.material as THREE.MeshBasicMaterial).opacity = p.grow ? Math.min(0.75, t) * Math.min(1, (1 - t) * 6) : Math.min(1, t * 1.5);
     }
   }
 }

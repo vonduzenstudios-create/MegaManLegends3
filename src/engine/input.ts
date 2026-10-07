@@ -11,6 +11,11 @@ export interface InputState {
   firePressed: boolean;
   kick: boolean; // pressed this tick
   lockOn: boolean; // held
+  talk: boolean; // pressed this tick
+  /** Menu navigation, pressed this tick. */
+  left: boolean;
+  right: boolean;
+  confirm: boolean;
 }
 
 const MOUSE_SENS = 0.0025;
@@ -29,7 +34,7 @@ export class Input {
   private mouseButtons = new Set<number>();
   private mouseDX = 0;
   private mouseDY = 0;
-  private prev = { jump: false, fire: false, kick: false };
+  private prev = { jump: false, fire: false, kick: false, talk: false, left: false, right: false, confirm: false };
   pointerLocked = false;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -84,6 +89,10 @@ export class Input {
     let fire = this.mouseButtons.has(0);
     let kick = k('KeyE');
     let lockOn = this.mouseButtons.has(2) || k('ShiftLeft');
+    let talk = k('KeyF');
+    let left = k('ArrowLeft') || k('KeyA');
+    let right = k('ArrowRight') || k('KeyD');
+    let confirm = k('Enter') || k('Space');
 
     const pad = this.gamepad();
     if (pad) {
@@ -101,6 +110,10 @@ export class Input {
       kick ||= b(1);
       fire ||= b(2) || b(7);
       lockOn ||= b(6) || b(4);
+      talk ||= b(3);
+      confirm ||= b(0) || b(9);
+      left ||= b(14) || (pad.axes[0] ?? 0) < -0.5;
+      right ||= b(15) || (pad.axes[0] ?? 0) > 0.5;
     }
 
     const len = Math.hypot(moveX, moveY);
@@ -120,8 +133,12 @@ export class Input {
       firePressed: fire && !this.prev.fire,
       kick: kick && !this.prev.kick,
       lockOn,
+      talk: talk && !this.prev.talk,
+      left: left && !this.prev.left,
+      right: right && !this.prev.right,
+      confirm: confirm && !this.prev.confirm,
     };
-    this.prev = { jump, fire, kick };
+    this.prev = { jump, fire, kick, talk, left, right, confirm };
     this.tapped.clear();
     return state;
   }

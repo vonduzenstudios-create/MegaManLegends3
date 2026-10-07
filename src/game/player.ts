@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { CollisionWorld } from '../engine/collision';
 import type { InputState } from '../engine/input';
 import { sfx } from '../engine/audio';
-import type { PlayerRig } from './playerModel';
+import type { AnimState, PlayerRig } from './playerModel';
 import type { CharacterDef } from './characters';
 import type { Projectiles } from './projectiles';
 import type { Effects } from './effects';
@@ -58,7 +58,23 @@ export class Player {
   private runPhase = 0;
   private aimPitch = 0;
   private wasLockHeld = false;
+  private justJumped = false;
+  private landingSpeed = 0;
+  private prevYaw = 0;
   private readonly tmp = new THREE.Vector3();
+  private readonly animState: AnimState = {
+    speed: 0,
+    vel: new THREE.Vector3(),
+    yawRate: 0,
+    grounded: true,
+    justJumped: false,
+    landingSpeed: 0,
+    kick: -1,
+    aiming: false,
+    hurt: false,
+    dead: false,
+    lookDir: null,
+  };
 
   constructor(private ctx: PlayerContext, readonly def: CharacterDef) {
     this.rig = def.build();
@@ -139,12 +155,14 @@ export class Player {
       this.vel.y = this.def.jumpSpeed;
       this.coyote = 0;
       this.grounded = false;
+      this.justJumped = true;
       sfx.jump();
     }
     if (!input.jumpHeld && this.vel.y > 0 && !this.grounded) this.vel.y *= Math.pow(JUMP_CUT, dt * 20);
     this.vel.y -= GRAVITY * dt;
 
     const res = this.ctx.world.moveCylinder(this.pos, this.vel, RADIUS, HEIGHT, dt, this.grounded);
+    this.landingSpeed = res.landingSpeed;
     if (res.landingSpeed > 6) {
       sfx.land();
       this.ctx.effects.dust(this.pos);
@@ -369,6 +387,25 @@ export class Player {
     r.body.position.y = (r.body.userData.baseY ?? 0.78) + bob;
     r.torso.rotation.x = lerp(r.torso.rotation.x, lean, k);
     r.head.rotation.x = -r.torso.rotation.x * 0.6;
+
+    if (r.drive) {
+      const st = this.animState;
+      st.speed = run;
+      st.vel.copy(this.vel);
+      st.yawRate = dt > 0 ? wrapAngle(this.yaw - this.prevYaw) / dt : 0;
+      st.grounded = this.grounded;
+      st.justJumped = this.justJumped;
+      st.landingSpeed = this.landingSpeed;
+      st.kick = this.kickTimer > 0 ? 1 - this.kickTimer / KICK_TIME : -1;
+      st.aiming = aiming;
+      st.hurt = this.hurtTimer > 0;
+      st.dead = this.dead;
+      st.lookDir = this.lockTarget ? this.lockTarget.center.clone().sub(this.head) : null;
+      r.drive(st, dt);
+    }
+    this.prevYaw = this.yaw;
+    this.justJumped = false;
+    this.landingSpeed = 0;
   }
 }
 

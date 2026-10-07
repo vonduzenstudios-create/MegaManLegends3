@@ -35,6 +35,34 @@ export interface PlayerRig {
   muzzle: THREE.Object3D;
   /** Hair or cloth that trails behind when moving. */
   ponytail?: THREE.Group;
+  /**
+   * Rigs with their own animation clips implement this. It runs after the
+   * procedural joint animation each frame, so a model can play clips and
+   * only borrow the proxy joints it needs (aiming arm, kicking leg).
+   */
+  drive?: (state: AnimState, dt: number) => void;
+}
+
+/** What the player is doing this frame, for clip-driven rigs. */
+export interface AnimState {
+  /** Horizontal speed as a fraction of top speed, 0..1. */
+  speed: number;
+  /** World-space velocity. */
+  vel: THREE.Vector3;
+  /** Facing change per second, radians. */
+  yawRate: number;
+  grounded: boolean;
+  /** True on the frame a jump starts. */
+  justJumped: boolean;
+  /** Downward speed on the frame the player touched down, else 0. */
+  landingSpeed: number;
+  /** Kick progress 0..1, or -1 when not kicking. */
+  kick: number;
+  aiming: boolean;
+  hurt: boolean;
+  dead: boolean;
+  /** World direction to the lock-on target, if any. */
+  lookDir: THREE.Vector3 | null;
 }
 
 export function pivot(parent: THREE.Object3D, x: number, y: number, z: number) {

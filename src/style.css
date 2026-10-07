@@ -234,3 +234,124 @@ body {
   font-size: 14px;
   opacity: 0.85;
 }
+
+#zenny {
+  position: absolute;
+  right: 28px;
+  top: 20px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+#zenny .z {
+  color: #7cff6a;
+}
+
+#special {
+  position: absolute;
+  left: 24px;
+  top: 48px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+#special-pips {
+  display: flex;
+  gap: 3px;
+}
+
+#special-pips i {
+  width: 10px;
+  height: 12px;
+  border: 1px solid #fff;
+  background: #333;
+}
+
+#special-pips i.on {
+  background: #ff6a4a;
+}
+
+#boss {
+  position: absolute;
+  left: 50%;
+  bottom: 120px;
+  transform: translateX(-50%);
+  width: min(560px, 80vw);
+  text-align: center;
+}
+
+#boss-name {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin-bottom: 4px;
+  color: #ffb0a0;
+}
+
+#boss-bar {
+  height: 12px;
+  border: 2px solid #fff;
+  background: #222;
+}
+
+#boss-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(#ff8a6a, #d02a1a);
+  transition: width 0.15s;
+}
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #fff;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+  background: rgba(5, 10, 25, 0.6);
+  cursor: pointer;
+}
+
+#overlay-title {
+  font-size: clamp(36px, 7vw, 72px);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #ffe14a;
+  -webkit-text-stroke: 2px #1a3a8a;
+}
+
+#overlay.lost #overlay-title {
+  color: #ff6a5a;
+  -webkit-text-stroke: 2px #4a0a0a;
+}
+
+#overlay-text {
+  max-width: 640px;
+  padding: 0 16px;
+  font-size: 19px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+#overlay-hint {
+  font-size: 15px;
+  opacity: 0.85;
+  animation: blink 1.2s steps(2) infinite;
+}
+
+#fade {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}

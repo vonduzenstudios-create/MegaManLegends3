@@ -12,6 +12,7 @@ export interface InputState {
   kick: boolean; // pressed this tick
   lockOn: boolean; // held
   talk: boolean; // pressed this tick
+  special: boolean; // pressed this tick
   /** Menu navigation, pressed this tick. */
   left: boolean;
   right: boolean;
@@ -34,7 +35,7 @@ export class Input {
   private mouseButtons = new Set<number>();
   private mouseDX = 0;
   private mouseDY = 0;
-  private prev = { jump: false, fire: false, kick: false, talk: false, left: false, right: false, confirm: false };
+  private prev = { jump: false, fire: false, kick: false, talk: false, special: false, left: false, right: false, confirm: false };
   pointerLocked = false;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -90,6 +91,7 @@ export class Input {
     let kick = k('KeyE');
     let lockOn = this.mouseButtons.has(2) || k('ShiftLeft');
     let talk = k('KeyF');
+    let special = k('KeyQ') || this.mouseButtons.has(1);
     let left = k('ArrowLeft') || k('KeyA');
     let right = k('ArrowRight') || k('KeyD');
     let confirm = k('Enter') || k('Space');
@@ -111,6 +113,7 @@ export class Input {
       fire ||= b(2) || b(7);
       lockOn ||= b(6) || b(4);
       talk ||= b(3);
+      special ||= b(5);
       confirm ||= b(0) || b(9);
       left ||= b(14) || (pad.axes[0] ?? 0) < -0.5;
       right ||= b(15) || (pad.axes[0] ?? 0) > 0.5;
@@ -134,11 +137,12 @@ export class Input {
       kick: kick && !this.prev.kick,
       lockOn,
       talk: talk && !this.prev.talk,
+      special: special && !this.prev.special,
       left: left && !this.prev.left,
       right: right && !this.prev.right,
       confirm: confirm && !this.prev.confirm,
     };
-    this.prev = { jump, fire, kick, talk, left, right, confirm };
+    this.prev = { jump, fire, kick, talk, special, left, right, confirm };
     this.tapped.clear();
     return state;
   }

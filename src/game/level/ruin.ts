@@ -17,8 +17,8 @@ function block(parent: THREE.Object3D, w: number, h: number, d: number, color: n
 
 /**
  * The sealed ruin entrance, cut into the hillside west of the path.
- * The facade faces east (+X). Returns the static scenery, the animated
- * glow parts and the spot in front of the door.
+ * The facade faces east (+X). Returns the static scenery, the moving door
+ * (with its glowing ring and core), its collider and the spot in front of it.
  */
 export function buildRuinEntrance(world: CollisionWorld) {
   const scenery = new THREE.Group();
@@ -48,15 +48,24 @@ export function buildRuinEntrance(world: CollisionWorld) {
   // Back wall that fills the arch behind the door.
   block(g, 3, 8, 4.4, STONE_DARK, -1.2, 4, 0);
 
-  // The sealed door: a heavy slab with a glowing ring emblem.
-  const door = block(g, 0.6, 5.4, 4.2, 0x8f8a80, 0.3, 2.7 + 0.4, 0);
-  door.name = 'ruin-door';
+  // Darkness behind the door, revealed once it sinks into the floor.
+  const dark = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 5.4), new THREE.MeshBasicMaterial({ color: 0x05060a }));
+  dark.rotation.y = Math.PI / 2;
+  dark.position.set(RUIN.x + 0.32, base + 3.1, RUIN.y);
+
+  // The sealed door: a heavy slab carrying a glowing ring emblem. It is kept
+  // out of the static batch because it moves.
+  const door = new THREE.Group();
+  door.position.set(RUIN.x, base, RUIN.y);
+  block(door, 0.6, 5.4, 4.2, 0x8f8a80, 0.3, 2.7 + 0.4, 0);
   const ring = toonMesh(new THREE.TorusGeometry(1.1, 0.12, 8, 28), GLOW, { emissive: 0x2a9ac0, outline: false });
+  ring.material = (ring.material as THREE.MeshToonMaterial).clone();
   ring.rotation.y = Math.PI / 2;
   ring.position.set(0.62, 3.2, 0);
   const core = toonMesh(new THREE.OctahedronGeometry(0.45, 0), GLOW, { emissive: 0x2a9ac0, outline: false });
+  core.material = (core.material as THREE.MeshToonMaterial).clone();
   core.position.set(0.7, 3.2, 0);
-  g.add(ring, core);
+  door.add(ring, core);
 
   // Tumbled blocks around the entrance.
   const rubble: [number, number, number, number, number][] = [
@@ -89,7 +98,7 @@ export function buildRuinEntrance(world: CollisionWorld) {
   add(0, -2, 3.3, 2.2, 9, 2.2);
   add(0, -2, -3.3, 2.2, 9, 2.2);
   add(-1.2, -2, 0, 3, 10, 4.4);
-  add(0.3, 0, 0, 0.6, 5.8, 4.2);
+  const doorBox = add(0.3, 0, 0, 0.6, 5.8, 4.2);
   for (let i = 0; i < 3; i++) add(4.4 - i, 0, 0, 1, 0.3 * (i + 1), 5);
   add(1.8, 0, 0, 6, 0.4, 9);
   for (const [x, z, h] of [
@@ -101,5 +110,5 @@ export function buildRuinEntrance(world: CollisionWorld) {
   }
 
   const doorFront = new THREE.Vector3(RUIN.x + 2.5, base + 1.3, RUIN.y);
-  return { scenery, glow: [ring, core], doorFront };
+  return { scenery, door, ring, core, dark, doorBox, doorFront };
 }

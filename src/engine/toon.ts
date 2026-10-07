@@ -77,3 +77,8 @@ export function toonMesh(
   }
   return mesh;
 }
+
+/** A toon material with a texture, for tiled floors and walls. */
+export function toonTextured(map: THREE.Texture, color: THREE.ColorRepresentation = 0xffffff) {
+  return new THREE.MeshToonMaterial({ color, map, gradientMap });
+}

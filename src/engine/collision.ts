@@ -32,6 +32,11 @@ export class CollisionWorld {
     return box;
   }
 
+  removeBox(box: Box) {
+    const i = this.boxes.indexOf(box);
+    if (i >= 0) this.boxes.splice(i, 1);
+  }
+
   /** Highest walkable surface under a circle, at or below `maxY`. */
   floorAt(x: number, z: number, radius: number, maxY: number) {
     let floor = this.groundHeight(x, z);

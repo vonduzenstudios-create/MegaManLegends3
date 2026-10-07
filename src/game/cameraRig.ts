@@ -16,8 +16,15 @@ export class CameraRig {
   private distance = DISTANCE;
   private readonly pivot = new THREE.Vector3();
   readonly forward = new THREE.Vector3();
+  /** Big moving things (the boss) the camera should not sit inside. */
+  obstacles: { center: THREE.Vector3; radius: number; active?: boolean }[] = [];
 
   constructor(readonly camera: THREE.PerspectiveCamera, private world: CollisionWorld) {}
+
+  /** Jump straight to the player next update instead of gliding (teleports). */
+  cut() {
+    this.pivot.set(0, 0, 0);
+  }
 
   update(dt: number, input: InputState, playerPos: THREE.Vector3, lock: Target | null) {
     if (lock) {
@@ -37,7 +44,18 @@ export class CameraRig {
     const back = new THREE.Vector3(-Math.sin(this.yaw) * cp, Math.sin(this.pitch), -Math.cos(this.yaw) * cp);
 
     // Pull in when a wall is between the camera and Mega Man.
-    const hit = this.world.raycast(this.pivot, back, DISTANCE);
+    let hit = this.world.raycast(this.pivot, back, DISTANCE);
+    for (const o of this.obstacles) {
+      if (o.active === false) continue;
+      // Ray-sphere entry distance.
+      const oc = this.pivot.clone().sub(o.center);
+      const b = oc.dot(back);
+      const c = oc.lengthSq() - o.radius * o.radius;
+      const disc = b * b - c;
+      if (disc < 0 || c < 0) continue;
+      const t = -b - Math.sqrt(disc);
+      if (t > 0 && t < hit) hit = t;
+    }
     const wanted = Math.max(0.8, hit - 0.3);
     this.distance = wanted < this.distance ? wanted : THREE.MathUtils.lerp(this.distance, wanted, Math.min(1, dt * 4));
 

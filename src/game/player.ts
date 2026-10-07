@@ -21,6 +21,10 @@ const MAX_SHOTS = 4;
 const KICK_TIME = 0.42;
 const KICK_HIT_AT = 0.12;
 const LOCK_RANGE = 26;
+const INVULN_TIME = 1.4;
+const HURT_TIME = 0.35;
+export const SPECIAL_MAX = 6;
+const SPECIAL_RECHARGE = 3.5;
 
 export interface PlayerContext {
   world: CollisionWorld;
@@ -39,6 +43,12 @@ export class Player {
   life: number;
   readonly maxLife: number;
   lockTarget: Target | null = null;
+  /** Active Buster: unlocked from the chest in the ruin. */
+  hasSpecial = false;
+  specialAmmo = SPECIAL_MAX;
+  private specialCharge = 0;
+  private invuln = 0;
+  private hurtTimer = 0;
 
   private coyote = 0;
   private fireCooldown = 0;
@@ -60,7 +70,36 @@ export class Player {
     this.pos.copy(pos);
     this.vel.set(0, 0, 0);
     this.yaw = yaw;
+    this.lockTarget = null;
     this.animate(0);
+  }
+
+  get dead() {
+    return this.life <= 0;
+  }
+
+  /** Returns true if the hit landed (not blocked by mercy invulnerability). */
+  takeDamage(amount: number, from: THREE.Vector3) {
+    if (this.invuln > 0 || this.dead) return false;
+    this.life = Math.max(0, this.life - amount);
+    this.invuln = INVULN_TIME;
+    this.hurtTimer = HURT_TIME;
+    this.kickTimer = 0;
+    const away = this.pos.clone().sub(from).setY(0);
+    if (away.lengthSq() < 1e-4) away.copy(this.forward).negate();
+    away.normalize();
+    this.vel.set(away.x * 7, 5, away.z * 7);
+    this.grounded = false;
+    sfx.hurt();
+    this.ctx.effects.burst(this.head, { color: 0xffffff, count: 10, speed: 4 });
+    return true;
+  }
+
+  revive() {
+    this.life = this.maxLife;
+    this.invuln = INVULN_TIME;
+    this.hurtTimer = 0;
+    this.specialAmmo = SPECIAL_MAX;
   }
 
   get head() {
@@ -77,6 +116,10 @@ export class Player {
    */
   update(dt: number, input: InputState, camYaw: number, camForward: THREE.Vector3, aimPoint: THREE.Vector3) {
     this.updateLock(input, camForward);
+    this.invuln -= dt;
+    this.hurtTimer -= dt;
+    const hurt = this.hurtTimer > 0 || this.dead;
+    if (hurt) input = { ...input, moveX: 0, moveY: 0, jump: false, fire: false, firePressed: false, kick: false, special: false };
 
     // --- Movement ---
     const camF = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw));
@@ -84,7 +127,7 @@ export class Player {
     const wish = camF.multiplyScalar(input.moveY).addScaledVector(camR, input.moveX);
     const kicking = this.kickTimer > 0;
     const speed = this.def.runSpeed * (kicking && this.grounded ? 0.15 : 1);
-    const accel = this.grounded ? GROUND_ACCEL : AIR_ACCEL;
+    const accel = hurt ? 4 : this.grounded ? GROUND_ACCEL : AIR_ACCEL;
     const targetVX = wish.x * speed;
     const targetVZ = wish.z * speed;
     this.vel.x = approach(this.vel.x, targetVX, accel * dt);
@@ -128,6 +171,16 @@ export class Player {
     const flat = Math.hypot(aimGoal.x - this.pos.x, aimGoal.z - this.pos.z);
     this.aimPitch = Math.atan2(aimGoal.y - (this.pos.y + 1.1), Math.max(flat, 0.5));
 
+    // --- Active Buster ---
+    if (this.hasSpecial && this.specialAmmo < SPECIAL_MAX) {
+      this.specialCharge += dt;
+      if (this.specialCharge >= SPECIAL_RECHARGE) {
+        this.specialCharge = 0;
+        this.specialAmmo++;
+      }
+    }
+    if (input.special && this.hasSpecial && this.specialAmmo > 0 && !kicking) this.fireSpecial(camForward, aimPoint);
+
     // --- Kick ---
     if (input.kick && !kicking) {
       this.kickTimer = KICK_TIME;
@@ -161,24 +214,48 @@ export class Player {
     this.ctx.projectiles.fire(muzzle, dir, { homing: this.lockTarget });
   }
 
+  /** Two missiles, one from each side, curling in on the target. */
+  private fireSpecial(camForward: THREE.Vector3, aimPoint: THREE.Vector3) {
+    this.specialAmmo--;
+    this.specialCharge = 0;
+    this.aimTimer = 0.5;
+    const target = this.lockTarget ?? this.pickTarget(camForward, 34);
+    const goal = target ? target.center : aimPoint;
+    const f = this.forward;
+    const right = new THREE.Vector3(f.z, 0, -f.x);
+    for (const s of [-1, 1]) {
+      const origin = this.pos.clone().setY(this.pos.y + 1.2).addScaledVector(right, s * 0.35);
+      // Launch up and outward first so they arc in.
+      const dir = goal.clone().sub(origin).normalize().addScaledVector(right, s * 0.8).setY(0.7);
+      this.ctx.projectiles.fireMissile(origin, dir, target);
+    }
+    sfx.missile();
+  }
+
+  /** The live target closest to where the camera is looking. */
+  private pickTarget(camForward: THREE.Vector3, range: number) {
+    let best: Target | null = null;
+    let bestScore = Infinity;
+    const look = new THREE.Vector3(camForward.x, 0, camForward.z).normalize();
+    for (const t of this.ctx.targets) {
+      if (!t.alive) continue;
+      const to = t.center.clone().sub(this.pos);
+      const dist = to.length();
+      if (dist > range) continue;
+      const facing = to.setY(0).normalize().dot(look);
+      if (facing < 0.3) continue;
+      const score = dist * (2 - facing);
+      if (score < bestScore) {
+        bestScore = score;
+        best = t;
+      }
+    }
+    return best;
+  }
+
   private updateLock(input: InputState, camForward: THREE.Vector3) {
     if (input.lockOn && !this.wasLockHeld) {
-      // Choose the target closest to where the camera is looking.
-      let best: Target | null = null;
-      let bestScore = Infinity;
-      for (const t of this.ctx.targets) {
-        if (!t.alive) continue;
-        const to = t.center.clone().sub(this.pos);
-        const dist = to.length();
-        if (dist > LOCK_RANGE) continue;
-        const facing = to.setY(0).normalize().dot(new THREE.Vector3(camForward.x, 0, camForward.z).normalize());
-        if (facing < 0.3) continue;
-        const score = dist * (2 - facing);
-        if (score < bestScore) {
-          bestScore = score;
-          best = t;
-        }
-      }
+      const best = this.pickTarget(camForward, LOCK_RANGE);
       this.lockTarget = best;
       if (best) sfx.lockOn();
     }
@@ -265,6 +342,12 @@ export class Player {
     if (aiming) {
       armL = -Math.PI / 2 - this.aimPitch;
       elbowL = 0;
+    }
+    // Mercy-invulnerability flicker; a hurt flinch leans back.
+    r.root.visible = this.invuln <= 0 || this.dead || Math.floor(this.invuln * 16) % 2 === 0;
+    if (this.hurtTimer > 0 || this.dead) {
+      lean = -0.4;
+      armL = armR = -0.8;
     }
     if (r.ponytail) {
       // Hair streams out behind with speed and bounces with the run.

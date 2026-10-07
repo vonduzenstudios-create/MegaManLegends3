@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { CollisionWorld } from '../../engine/collision';
+import type { Box, CollisionWorld } from '../../engine/collision';
 import { batchStatic } from '../../engine/staticBatch';
 import { mulberry32 } from '../../engine/noise';
 import { toonMesh } from '../../engine/toon';
@@ -19,6 +19,13 @@ export interface Level {
   companionYaw: number;
   smokePoints: THREE.Vector3[];
   ruinDoorFront: THREE.Vector3;
+  ruinDoor: {
+    door: THREE.Group;
+    ring: THREE.Mesh;
+    core: THREE.Mesh;
+    dark: THREE.Mesh;
+    collider: Box;
+  };
   fountainCenter: THREE.Vector3;
   update(dt: number, time: number): void;
   inMarket(p: THREE.Vector3): boolean;
@@ -169,15 +176,9 @@ export function buildLevel(scene: THREE.Scene, world: CollisionWorld): Level {
   const ruin = buildRuinEntrance(world);
   statics.add(ruin.scenery);
 
-  // The ruin's glowing emblem pulses, so pull it out before baking.
-  statics.updateMatrixWorld(true);
-  const ruinGlow = ruin.glow.map((m) => {
-    m.matrixWorld.decompose(m.position, m.quaternion, m.scale);
-    m.parent?.remove(m);
-    m.material = (m.material as THREE.MeshToonMaterial).clone();
-    scene.add(m);
-    return m;
-  });
+  // The ruin door moves and its emblem pulses, so it stays out of the batch.
+  scene.add(ruin.door, ruin.dark);
+  const ruinGlow = [ruin.ring, ruin.core];
 
   // Bake all other static scenery down to a handful of draw calls.
   scene.add(batchStatic(statics));
@@ -192,13 +193,14 @@ export function buildLevel(scene: THREE.Scene, world: CollisionWorld): Level {
     companionYaw: -2.4,
     smokePoints,
     ruinDoorFront: ruin.doorFront,
+    ruinDoor: { door: ruin.door, ring: ruin.ring, core: ruin.core, dark: ruin.dark, collider: ruin.doorBox },
     fountainCenter,
     update(dt, time) {
       market.spray.update(dt, time);
       const pulse = 0.6 + Math.sin(time * 2.5) * 0.4;
       for (const g of ruinGlow) {
         (g.material as THREE.MeshToonMaterial).emissiveIntensity = 0.5 + pulse;
-        if (g.geometry.type === 'OctahedronGeometry') g.rotateX(dt * 1.5);
+        if (g === ruin.core) g.rotateX(dt * 1.5);
       }
     },
     inMarket(p) {

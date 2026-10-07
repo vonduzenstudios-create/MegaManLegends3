@@ -12,6 +12,12 @@
       <div id="reticle"></div>
       <div id="lock-reticle"></div>
       <div id="life"><div id="life-fill"></div></div>
+      <div id="special" hidden><span>ACTIVE BUSTER</span><div id="special-pips"></div></div>
+      <div id="zenny"><span class="z">Ƶ</span> <span id="zenny-count">0</span></div>
+      <div id="boss" hidden>
+        <div id="boss-name"></div>
+        <div id="boss-bar"><div id="boss-fill"></div></div>
+      </div>
       <div id="area-name"></div>
       <div id="prompt"></div>
       <div id="dialog" hidden>
@@ -21,9 +27,9 @@
       </div>
       <div id="help">
         <b>Keyboard + mouse</b> WASD move · Mouse look · Space jump · Left click buster ·
-        Right click (hold) lock-on · E kick / swing · F talk<br />
+        Right click (hold) lock-on · E kick / swing · Q special · F talk<br />
         <b>Controller</b> Left stick move · Right stick look · A jump · X / RT buster ·
-        LT (hold) lock-on · B kick / swing · Y talk
+        LT (hold) lock-on · B kick / swing · RB special · Y talk
       </div>
       <div id="start" hidden>Click to play</div>
     </div>
@@ -38,6 +44,12 @@
       </div>
       <div class="select-help">← → or stick to choose · Enter / A to start · or click a card</div>
     </div>
+    <div id="overlay" hidden>
+      <div id="overlay-title"></div>
+      <div id="overlay-text"></div>
+      <div id="overlay-hint"></div>
+    </div>
+    <div id="fade"></div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

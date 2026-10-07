@@ -1,8 +1,7 @@
 import type { PlayerRig } from './playerModel';
-import { buildRollModel } from './rollModel';
 import { buildZeroModel } from './zeroModel';
 
-export type CharacterId = 'zero' | 'roll';
+export type CharacterId = 'zero';
 
 export interface CharacterDef {
   id: CharacterId;
@@ -12,7 +11,7 @@ export interface CharacterDef {
   runSpeed: number;
   jumpSpeed: number;
   maxLife: number;
-  /** kick: Zero's kick. swing: Roll's wrench swing. */
+  /** kick: Zero's kick. swing: a wrench swing (unused since Roll became an NPC). */
   melee: 'kick' | 'swing';
 }
 
@@ -26,15 +25,5 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     jumpSpeed: 10.5,
     maxLife: 100,
     melee: 'kick',
-  },
-  roll: {
-    id: 'roll',
-    name: 'Roll Caskett',
-    tagline: 'Her own arm buster and a heavy wrench swing that sends cans flying.',
-    build: buildRollModel,
-    runSpeed: 6.5,
-    jumpSpeed: 10.5,
-    maxLife: 100,
-    melee: 'swing',
   },
 };

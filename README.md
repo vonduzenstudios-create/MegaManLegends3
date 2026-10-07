@@ -23,7 +23,7 @@ npm run build    # typecheck + production build into dist/
 | Jump    | Space                | A            |
 | Buster  | Left click           | X or RT      |
 | Lock-on | Right click (hold) or Left Shift | LT (hold) |
-| Kick (Mega Man) / wrench swing (Roll) | E | B |
+| Kick | E | B |
 | Talk / inspect | F             | Y            |
 
 ## Layout

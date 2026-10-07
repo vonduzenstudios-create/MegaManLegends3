@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mega Man Legends 3 Tech Demo</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <div id="hud">
+      <div id="reticle"></div>
+      <div id="lock-reticle"></div>
+      <div id="life"><div id="life-fill"></div></div>
+      <div id="help">
+        <b>Keyboard + mouse</b> WASD move · Mouse look · Space jump · Left click buster ·
+        Right click (hold) lock-on · E kick<br />
+        <b>Controller</b> Left stick move · Right stick look · A jump · X / RT buster ·
+        LT (hold) lock-on · B kick
+      </div>
+      <div id="start">Click to play</div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

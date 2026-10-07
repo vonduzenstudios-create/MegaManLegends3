@@ -161,6 +161,14 @@ const kid = npcs.find((n) => n.name === 'Kid');
 
 const input = new Input(canvas);
 const cam = new CameraRig(camera, world);
+// Keep the camera out of the boss's body.
+cam.obstacles.push({
+  center: boss.center,
+  radius: 3.2,
+  get active() {
+    return boss.active;
+  },
+});
 const music = new Music();
 const ambience = new Ambience();
 

@@ -36,6 +36,16 @@ export class Can implements Kickable {
     return this._center.set(this.pos.x, this.pos.y + HEIGHT / 2, this.pos.z);
   }
 
+  /** Put the can back, standing upright and still. */
+  reset(pos: THREE.Vector3) {
+    this.pos.copy(pos);
+    this.vel.set(0, 0, 0);
+    this.spin.set(0, 0, 0);
+    this.mesh.quaternion.identity();
+    this.grounded = true;
+    this.sync();
+  }
+
   kick(dir: THREE.Vector3, power: number) {
     this.vel.copy(dir).multiplyScalar(power);
     this.vel.y = Math.max(this.vel.y, power * 0.45);

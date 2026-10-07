@@ -17,6 +17,11 @@ export function unlockAudio() {
   if (ctx.state === 'suspended') void ctx.resume();
 }
 
+/** Shared audio graph for other synth modules (music, ambience). */
+export function audioGraph() {
+  return ctx && master && noiseBuffer ? { ctx, master, noiseBuffer } : null;
+}
+
 interface ToneOpts {
   type: OscillatorType;
   from: number;
@@ -85,6 +90,13 @@ export const sfx = {
   hit() {
     noise(0.15, 0.35, 3000);
     tone({ type: 'square', from: 500, to: 120, dur: 0.15, vol: 0.12 });
+  },
+  swing() {
+    noise(0.18, 0.3, 1200);
+    tone({ type: 'sine', from: 300, to: 90, dur: 0.16, vol: 0.3 });
+  },
+  talk() {
+    tone({ type: 'square', from: 660, to: 660, dur: 0.03, vol: 0.06 });
   },
   lockOn() {
     tone({ type: 'square', from: 880, to: 880, dur: 0.05, vol: 0.1 });

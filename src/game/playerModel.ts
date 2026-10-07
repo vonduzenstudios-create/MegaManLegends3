@@ -31,18 +31,24 @@ export interface PlayerRig {
   legR: THREE.Group;
   shinL: THREE.Group;
   shinR: THREE.Group;
+  /** Where buster shots leave from. */
   muzzle: THREE.Object3D;
+  /** Hair or cloth that trails behind when moving. */
+  ponytail?: THREE.Group;
 }
 
-function pivot(parent: THREE.Object3D, x: number, y: number, z: number) {
+export function pivot(parent: THREE.Object3D, x: number, y: number, z: number) {
   const g = new THREE.Group();
   g.position.set(x, y, z);
   parent.add(g);
   return g;
 }
 
-function part(parent: THREE.Object3D, geo: THREE.BufferGeometry, color: number, x = 0, y = 0, z = 0) {
+export function part(parent: THREE.Object3D, geo: THREE.BufferGeometry, color: number, x = 0, y = 0, z = 0) {
   const m = toonMesh(geo, color);
+  // Characters cast shadows but skip receiving them: self-shadowing on
+  // small, curved parts reads as dirty speckles under toon shading.
+  m.receiveShadow = false;
   m.position.set(x, y, z);
   parent.add(m);
   return m;
@@ -53,66 +59,73 @@ function part(parent: THREE.Object3D, geo: THREE.BufferGeometry, color: number, 
  * about 1.55 units tall.
  */
 export function buildPlayerModel(): PlayerRig {
+  // Proportions follow Matthew's reference model (see
+  // /mnt/project-files/reference/megaman): hips 0.89, hip joints 0.82,
+  // knees 0.51, shoulders 1.11, head pivot 1.21, helmet top 1.55.
   const root = new THREE.Group();
-  const body = pivot(root, 0, 0.78, 0); // hips
+  const body = pivot(root, 0, 0.89, 0); // hips
+  body.userData.baseY = 0.89;
 
   // Pelvis and belt.
-  part(body, new THREE.BoxGeometry(0.4, 0.16, 0.26), C.suit, 0, -0.02, 0);
-  part(body, new THREE.BoxGeometry(0.42, 0.06, 0.28), C.belt, 0, 0.07, 0);
+  part(body, new THREE.BoxGeometry(0.3, 0.14, 0.2), C.suit, 0, -0.03, 0);
+  part(body, new THREE.BoxGeometry(0.32, 0.05, 0.22), C.belt, 0, 0.05, 0);
 
-  // Torso.
-  const torso = pivot(body, 0, 0.1, 0);
-  part(torso, new THREE.BoxGeometry(0.42, 0.34, 0.26), C.suit, 0, 0.17, 0);
-  part(torso, new THREE.BoxGeometry(0.46, 0.24, 0.3), C.armor, 0, 0.24, 0.01);
-  part(torso, new THREE.BoxGeometry(0.2, 0.12, 0.05), C.armorLight, 0, 0.26, 0.17);
+  // Torso: a slim suit with a chest plate on top.
+  const torso = pivot(body, 0, 0.08, 0);
+  part(torso, new THREE.BoxGeometry(0.28, 0.22, 0.2), C.suit, 0, 0.08, 0);
+  part(torso, new THREE.BoxGeometry(0.34, 0.14, 0.24), C.armor, 0, 0.15, 0.01);
+  part(torso, new THREE.BoxGeometry(0.14, 0.07, 0.04), C.armorLight, 0, 0.16, 0.14);
+  part(torso, new THREE.CylinderGeometry(0.05, 0.06, 0.06, 10), C.suit, 0, 0.22, 0);
 
-  // Head.
-  const head = pivot(torso, 0, 0.4, 0);
-  part(head, new THREE.SphereGeometry(0.19, 16, 12), C.skin, 0, 0.14, 0.04);
-  const helmet = part(head, new THREE.SphereGeometry(0.235, 18, 14), C.helmet, 0, 0.18, -0.045);
+  // Head: big and round, helmet top at 1.55.
+  const head = pivot(torso, 0, 0.24, 0);
+  part(head, new THREE.SphereGeometry(0.165, 16, 12), C.skin, 0, 0.1, 0.035);
+  const helmet = part(head, new THREE.SphereGeometry(0.2, 18, 14), C.helmet, 0, 0.13, -0.03);
   helmet.scale.set(1, 1, 1.05);
   // Fringe of hair peeking out under the helmet.
-  part(head, new THREE.BoxGeometry(0.24, 0.05, 0.06), C.hair, 0, 0.27, 0.15);
-  // Ear pieces.
+  part(head, new THREE.BoxGeometry(0.2, 0.045, 0.05), C.hair, 0, 0.21, 0.13);
   for (const s of [-1, 1]) {
-    const ear = part(head, new THREE.CylinderGeometry(0.075, 0.075, 0.06, 14), C.helmetTrim, s * 0.235, 0.15, -0.01);
+    // Ear pieces.
+    const ear = part(head, new THREE.CylinderGeometry(0.065, 0.065, 0.05, 14), C.helmetTrim, s * 0.2, 0.1, -0.01);
     ear.rotation.z = Math.PI / 2;
     // Eyes.
-    part(head, new THREE.BoxGeometry(0.045, 0.075, 0.02), C.eye, s * 0.065, 0.15, 0.22);
-    part(head, new THREE.BoxGeometry(0.018, 0.022, 0.01), 0xffffff, s * 0.065 + 0.01, 0.17, 0.232);
+    part(head, new THREE.BoxGeometry(0.045, 0.07, 0.02), C.eye, s * 0.058, 0.11, 0.19);
+    part(head, new THREE.BoxGeometry(0.018, 0.022, 0.01), 0xffffff, s * 0.058 + 0.01, 0.13, 0.201);
   }
   // Helmet ridge.
-  part(head, new THREE.BoxGeometry(0.05, 0.06, 0.3), C.helmetTrim, 0, 0.42, -0.04);
+  part(head, new THREE.BoxGeometry(0.045, 0.05, 0.26), C.helmetTrim, 0, 0.32, -0.03);
 
   // Arms: shoulder pivot -> upper arm -> elbow pivot -> forearm.
   const makeArm = (side: number, buster: boolean) => {
-    const arm = pivot(torso, side * 0.29, 0.3, 0);
-    part(arm, new THREE.SphereGeometry(0.11, 12, 10), C.armor, 0, 0, 0);
-    part(arm, new THREE.CylinderGeometry(0.06, 0.06, 0.22, 10), C.suit, 0, -0.13, 0);
-    const fore = pivot(arm, 0, -0.25, 0);
+    const arm = pivot(torso, side * 0.2, 0.14, 0);
+    part(arm, new THREE.SphereGeometry(0.085, 12, 10), C.armor, 0, 0, 0);
+    part(arm, new THREE.CylinderGeometry(0.048, 0.048, 0.15, 10), C.suit, 0, -0.09, 0);
+    const fore = pivot(arm, 0, -0.17, 0);
     if (buster) {
-      part(fore, new THREE.CylinderGeometry(0.1, 0.11, 0.3, 14), C.buster, 0, -0.12, 0);
-      part(fore, new THREE.CylinderGeometry(0.06, 0.06, 0.04, 12), C.muzzle, 0, -0.28, 0);
+      part(fore, new THREE.CylinderGeometry(0.1, 0.12, 0.32, 14), C.buster, 0, -0.13, 0);
+      part(fore, new THREE.CylinderGeometry(0.122, 0.122, 0.04, 14), C.helmetTrim, 0, -0.04, 0);
+      part(fore, new THREE.CylinderGeometry(0.055, 0.055, 0.04, 12), C.muzzle, 0, -0.3, 0);
     } else {
-      part(fore, new THREE.CylinderGeometry(0.075, 0.085, 0.22, 12), C.armor, 0, -0.09, 0);
-      part(fore, new THREE.SphereGeometry(0.075, 10, 8), C.armorLight, 0, -0.24, 0);
+      part(fore, new THREE.CylinderGeometry(0.06, 0.07, 0.17, 12), C.armor, 0, -0.07, 0);
+      part(fore, new THREE.SphereGeometry(0.065, 10, 8), C.armorLight, 0, -0.19, 0);
     }
     return { arm, fore };
   };
   const left = makeArm(1, true);
   const right = makeArm(-1, false);
   const muzzle = new THREE.Object3D();
-  muzzle.position.set(0, -0.32, 0);
+  muzzle.position.set(0, -0.33, 0);
   left.fore.add(muzzle);
 
-  // Legs: hip pivot -> thigh -> knee pivot -> shin and boot.
+  // Legs: hip pivot -> thigh -> knee pivot -> bell-shaped boot.
   const makeLeg = (side: number) => {
-    const leg = pivot(body, side * 0.11, -0.08, 0);
-    part(leg, new THREE.CylinderGeometry(0.075, 0.07, 0.3, 10), C.suit, 0, -0.15, 0);
-    const shin = pivot(leg, 0, -0.32, 0);
-    part(shin, new THREE.CylinderGeometry(0.1, 0.11, 0.24, 12), C.boot, 0, -0.1, 0);
-    part(shin, new THREE.BoxGeometry(0.2, 0.12, 0.32), C.boot, 0, -0.3, 0.05);
-    part(shin, new THREE.BoxGeometry(0.21, 0.04, 0.33), C.sole, 0, -0.37, 0.05);
+    const leg = pivot(body, side * 0.09, -0.07, 0);
+    part(leg, new THREE.CylinderGeometry(0.055, 0.05, 0.3, 10), C.suit, 0, -0.15, 0);
+    const shin = pivot(leg, 0, -0.31, 0);
+    part(shin, new THREE.CylinderGeometry(0.068, 0.068, 0.04, 12), C.helmetTrim, 0, 0.0, 0);
+    part(shin, new THREE.CylinderGeometry(0.065, 0.11, 0.42, 14), C.boot, 0, -0.22, 0);
+    part(shin, new THREE.BoxGeometry(0.2, 0.1, 0.3), C.boot, 0, -0.45, 0.06);
+    part(shin, new THREE.BoxGeometry(0.21, 0.035, 0.31), C.sole, 0, -0.49, 0.06);
     return { leg, shin };
   };
   const legL = makeLeg(1);

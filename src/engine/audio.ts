@@ -102,4 +102,54 @@ export const sfx = {
     tone({ type: 'square', from: 880, to: 880, dur: 0.05, vol: 0.1 });
     tone({ type: 'square', from: 1320, to: 1320, dur: 0.06, vol: 0.1, delay: 0.06 });
   },
+  explode() {
+    noise(0.5, 0.5, 1800);
+    tone({ type: 'sine', from: 120, to: 30, dur: 0.45, vol: 0.5 });
+  },
+  enemyShot() {
+    tone({ type: 'sawtooth', from: 380, to: 160, dur: 0.18, vol: 0.12 });
+  },
+  hurt() {
+    tone({ type: 'square', from: 900, to: 180, dur: 0.22, vol: 0.18 });
+    noise(0.1, 0.25, 2000);
+  },
+  zenny() {
+    tone({ type: 'triangle', from: 1568, to: 1568, dur: 0.06, vol: 0.12 });
+    tone({ type: 'triangle', from: 2093, to: 2093, dur: 0.12, vol: 0.12, delay: 0.05 });
+  },
+  heal() {
+    for (let i = 0; i < 4; i++) tone({ type: 'square', from: 523 * Math.pow(1.26, i), to: 523 * Math.pow(1.26, i), dur: 0.06, vol: 0.08, delay: i * 0.05 });
+  },
+  stomp() {
+    noise(0.6, 0.6, 700);
+    tone({ type: 'sine', from: 90, to: 25, dur: 0.6, vol: 0.7 });
+  },
+  roar() {
+    tone({ type: 'sawtooth', from: 140, to: 60, dur: 1.4, vol: 0.25 });
+    tone({ type: 'sawtooth', from: 147, to: 62, dur: 1.4, vol: 0.2 });
+    noise(1.2, 0.25, 900);
+  },
+  charge() {
+    tone({ type: 'sawtooth', from: 200, to: 1200, dur: 0.9, vol: 0.12 });
+  },
+  laser() {
+    tone({ type: 'square', from: 1800, to: 1500, dur: 0.12, vol: 0.07 });
+    noise(0.12, 0.12, 6000);
+  },
+  missile() {
+    noise(0.3, 0.25, 4000);
+    tone({ type: 'sawtooth', from: 300, to: 900, dur: 0.25, vol: 0.08 });
+  },
+  rumble() {
+    noise(2.2, 0.45, 400);
+    tone({ type: 'sine', from: 50, to: 35, dur: 2.2, vol: 0.4 });
+  },
+  chest() {
+    const notes = [523, 659, 784, 1047, 784, 1047];
+    notes.forEach((f, i) => tone({ type: 'square', from: f, to: f, dur: i === notes.length - 1 ? 0.5 : 0.1, vol: 0.1, delay: i * 0.1 }));
+  },
+  victory() {
+    const notes = [392, 523, 659, 784, 659, 784, 1047];
+    notes.forEach((f, i) => tone({ type: 'square', from: f, to: f, dur: i === notes.length - 1 ? 0.9 : 0.14, vol: 0.12, delay: i * 0.14 }));
+  },
 };

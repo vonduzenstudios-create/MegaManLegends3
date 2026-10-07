@@ -19,6 +19,11 @@ export class CameraRig {
 
   constructor(readonly camera: THREE.PerspectiveCamera, private world: CollisionWorld) {}
 
+  /** Jump straight to the player next update instead of gliding (teleports). */
+  cut() {
+    this.pivot.set(0, 0, 0);
+  }
+
   update(dt: number, input: InputState, playerPos: THREE.Vector3, lock: Target | null) {
     if (lock) {
       // Swing behind the player so both they and the target stay framed.

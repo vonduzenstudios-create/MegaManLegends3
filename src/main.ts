@@ -21,6 +21,7 @@ import { buildRuinInterior, ORIGIN } from './game/level/ruinInterior';
 import { RUIN } from './game/level/layout';
 import { SPECIAL_MAX } from './game/player';
 import { CHARACTERS, type CharacterId } from './game/characters';
+import type { AnimState } from './game/playerModel';
 import { buildRollModel } from './game/rollModel';
 import type { Kickable, Target } from './game/types';
 
@@ -443,8 +444,24 @@ const idle: Partial<InputState> = {
   lockOn: false,
 };
 
+// Standing still on the title screen; clip-driven rigs idle and look around.
+const TITLE_ANIM: AnimState = {
+  speed: 0,
+  vel: new THREE.Vector3(),
+  yawRate: 0,
+  grounded: true,
+  justJumped: false,
+  landingSpeed: 0,
+  kick: -1,
+  aiming: false,
+  hurt: false,
+  dead: false,
+  lookDir: null,
+};
+
 function updateSelect(state: InputState, elapsed: number) {
   if (state.confirm) startGame();
+  preview.drive?.(TITLE_ANIM, elapsed);
   const k = Math.min(1, elapsed * 8);
   preview.root.rotation.y = Math.sin(time * 1.5) * 0.3;
   preview.armR.rotation.x = THREE.MathUtils.lerp(preview.armR.rotation.x, -2.7 + Math.sin(time * 8) * 0.25, k);

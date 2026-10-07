@@ -4,7 +4,7 @@ A fan-made Mega Man Legends style tech demo that runs in the browser. Almost
 everything (models, textures, sound effects and music) is generated in code.
 The two exceptions are Zero's model (`public/models/zero.glb`) and the Apple
 Market theme (`public/music/market.mp3`, Matthew's own song).
-`tools/build-single-file.py` inlines both into a single HTML page for hosts
+`tools/build-single.mjs` inlines both into a single HTML page for hosts
 that only serve one file.
 
 **Stack:** Three.js, Vite, TypeScript, Web Audio API.

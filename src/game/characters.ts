@@ -1,7 +1,8 @@
-import { buildPlayerModel, type PlayerRig } from './playerModel';
+import type { PlayerRig } from './playerModel';
 import { buildRollModel } from './rollModel';
+import { buildZeroModel } from './zeroModel';
 
-export type CharacterId = 'megaman' | 'roll';
+export type CharacterId = 'zero' | 'roll';
 
 export interface CharacterDef {
   id: CharacterId;
@@ -11,16 +12,16 @@ export interface CharacterDef {
   runSpeed: number;
   jumpSpeed: number;
   maxLife: number;
-  /** kick: Mega Man's kick. swing: Roll's wrench swing. */
+  /** kick: Zero's kick. swing: Roll's wrench swing. */
   melee: 'kick' | 'swing';
 }
 
 export const CHARACTERS: Record<CharacterId, CharacterDef> = {
-  megaman: {
-    id: 'megaman',
-    name: 'Mega Man Volnutt',
-    tagline: 'Mega Buster rapid fire and a can-launching kick.',
-    build: buildPlayerModel,
+  zero: {
+    id: 'zero',
+    name: 'Zero',
+    tagline: 'Arm buster rapid fire and a can-launching kick.',
+    build: buildZeroModel,
     runSpeed: 6.5,
     jumpSpeed: 10.5,
     maxLife: 100,

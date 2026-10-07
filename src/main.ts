@@ -80,7 +80,7 @@ window.addEventListener('gamepadconnected', () => unlockAudio());
 
 // --- Character select ---------------------------------------------------
 // Both heroes stand by the crash site; the highlighted one strikes a pose.
-const order: CharacterId[] = ['megaman', 'roll'];
+const order: CharacterId[] = ['zero', 'roll'];
 let selected = 0;
 const previews = order.map((id, i) => {
   const rig = CHARACTERS[id].build();
@@ -148,8 +148,8 @@ function startGame() {
   selectEl.hidden = true;
   hudEl.hidden = false;
   const intro =
-    id === 'megaman'
-      ? ["The Flutter's left engine is wrecked, Mega Man. We won't be flying anywhere today.", "There's a town called Apple Market up the path to the north. See if anyone there sells parts!"]
+    id === 'zero'
+      ? ["The Flutter's left engine is wrecked, Zero. We won't be flying anywhere today.", "There's a town called Apple Market up the path to the north. See if anyone there sells parts!"]
       : ['That landing was rough. The left engine is totally shot.', 'Apple Market is up the path to the north. Go see if you can find a replacement part, Roll!'];
   openDialog(companion.name, intro);
 }

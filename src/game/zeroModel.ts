@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { toon } from '../engine/toon';
+import { loadAsset } from '../engine/assets';
 import type { PlayerRig } from './playerModel';
 
 /**
@@ -39,10 +40,12 @@ const EYE_COLOR = 0x2a8a3e;
 
 let template: THREE.Object3D | null = null;
 const waiting: Array<() => void> = [];
-new GLTFLoader().load(`${import.meta.env.BASE_URL}models/zero.glb`, (gltf) => {
-  template = gltf.scene;
-  for (const fn of waiting.splice(0)) fn();
-});
+void loadAsset('models/zero.glb').then((data) =>
+  new GLTFLoader().parse(data, '', (gltf) => {
+    template = gltf.scene;
+    for (const fn of waiting.splice(0)) fn();
+  }),
+);
 
 function whenLoaded(fn: () => void) {
   if (template) fn();

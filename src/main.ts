@@ -649,6 +649,7 @@ Object.assign(window, {
     startGame,
     advanceDialog,
     ruin,
+    music,
     boss,
     enemies,
     pickups,

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { toon } from '../engine/toon';
+import { loadAsset } from '../engine/assets';
 import type { AnimState, PlayerRig } from './playerModel';
 
 /**
@@ -42,23 +43,19 @@ const EYE_COLOR = 0x2a8a3e;
 let template: THREE.Object3D | null = null;
 let clips: THREE.AnimationClip[] = [];
 const waiting: Array<() => void> = [];
-{
-  const loader = new GLTFLoader();
-  const onLoad = (gltf: { scene: THREE.Group; animations: THREE.AnimationClip[] }) => {
-    template = gltf.scene;
-    clips = gltf.animations;
-    for (const fn of waiting.splice(0)) fn();
-  };
-  // Single-file builds (the shareable test page can't fetch files) embed
-  // the model as base64 on the page; otherwise it's a normal asset.
-  const inline = (window as { __ZERO_GLB?: string }).__ZERO_GLB;
-  if (inline) {
-    const bytes = Uint8Array.from(atob(inline), (c) => c.charCodeAt(0));
-    loader.parse(bytes.buffer, '', onLoad, (e) => console.error(e));
-  } else {
-    loader.load(`${import.meta.env.BASE_URL}models/zero.glb`, onLoad);
-  }
-}
+// Single-file builds embed the model on the page (see engine/assets.ts).
+void loadAsset('models/zero.glb').then((data) =>
+  new GLTFLoader().parse(
+    data,
+    '',
+    (gltf) => {
+      template = gltf.scene;
+      clips = gltf.animations;
+      for (const fn of waiting.splice(0)) fn();
+    },
+    (e) => console.error(e),
+  ),
+);
 
 function whenLoaded(fn: () => void) {
   if (template) fn();

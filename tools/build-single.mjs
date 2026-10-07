@@ -1,6 +1,7 @@
 // Packs the Vite build into one self-contained HTML page for the shareable
 // test link, which can't fetch files: the stylesheet and script are inlined
-// and Zero's model is embedded as base64 (see the loader in zeroModel.ts).
+// and the binary assets (Zero's model, the market song) are embedded as
+// base64 in window.__ASSETS (see src/engine/assets.ts).
 //   npm run build && node tools/build-single.mjs dist/index.html out/game.html
 import fs from 'fs';
 import path from 'path';
@@ -18,8 +19,10 @@ html = html.replace(/<script type="module"[^>]*src="\.?\/?([^"]+)"[^>]*><\/scrip
 });
 html = html.replace(/<link rel="modulepreload"[^>]*>/g, '');
 
-const glb = fs.readFileSync(path.join(dir, 'models/zero.glb')).toString('base64');
-html = html.replace('</head>', `<script>window.__ZERO_GLB="${glb}"</script></head>`);
+const assets = Object.fromEntries(
+  ['models/zero.glb', 'music/market.mp3'].map((p) => [p, fs.readFileSync(path.join(dir, p)).toString('base64')]),
+);
+html = html.replace('</head>', `<script>window.__ASSETS=${JSON.stringify(assets)}</script></head>`);
 
 fs.mkdirSync(path.dirname(dst), { recursive: true });
 fs.writeFileSync(dst, html);

@@ -7,6 +7,7 @@
 // "|" bar lines are ignored and only there for readability.
 
 import { audioGraph } from './audio';
+import { loadAsset } from './assets';
 
 export type Instrument = 'lead' | 'accordion' | 'pluck' | 'bass' | 'pad' | 'drums';
 
@@ -14,6 +15,15 @@ export interface Track {
   instrument: Instrument;
   volume: number;
   pattern: string;
+}
+
+/** A recorded track (an audio file) instead of a sequenced song. */
+export interface Recording {
+  file: string;
+  volume: number;
+  /** Loop between these points (seconds), skipping silence at the ends. */
+  loopStart?: number;
+  loopEnd?: number;
 }
 
 export interface Song {
@@ -229,19 +239,64 @@ class SongPlayer {
   }
 }
 
+/** Plays a decoded recording on a loop; same fade interface as SongPlayer. */
+class RecordingPlayer {
+  readonly gain: GainNode;
+  private source: AudioBufferSourceNode | null = null;
+  private stopped = false;
+
+  constructor(ctx: AudioContext, out: AudioNode, rec: Recording) {
+    this.gain = ctx.createGain();
+    this.gain.gain.value = 0;
+    this.gain.connect(out);
+    void decode(ctx, rec.file).then((buffer) => {
+      if (this.stopped) return;
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      src.loopStart = rec.loopStart ?? 0;
+      src.loopEnd = rec.loopEnd ?? buffer.duration;
+      const vol = ctx.createGain();
+      vol.gain.value = rec.volume;
+      src.connect(vol).connect(this.gain);
+      src.start(ctx.currentTime + 0.05, rec.loopStart ?? 0);
+      this.source = src;
+    });
+  }
+
+  schedule(_until: number) {}
+
+  stop() {
+    this.stopped = true;
+    this.source?.stop();
+  }
+}
+
+const decoded = new Map<string, Promise<AudioBuffer>>();
+function decode(ctx: AudioContext, file: string) {
+  let p = decoded.get(file);
+  if (!p) {
+    p = loadAsset(file).then((data) => ctx.decodeAudioData(data));
+    decoded.set(file, p);
+  }
+  return p;
+}
+
 const LOOKAHEAD = 0.15;
 const FADE = 1.5;
 
+export type MusicTrack = Song | Recording;
+
 /** Plays one song at a time and crossfades between them. */
 export class Music {
-  private current: { song: Song; player: SongPlayer } | null = null;
-  private fading: SongPlayer[] = [];
+  private current: { song: MusicTrack; player: SongPlayer | RecordingPlayer } | null = null;
+  private fading: (SongPlayer | RecordingPlayer)[] = [];
   private bus: GainNode | null = null;
-  private wanted: Song | null = null;
+  private wanted: MusicTrack | null = null;
   volume = 0.55;
 
-  /** Request a song (or silence with null). Safe to call every frame. */
-  play(song: Song | null) {
+  /** Request a song or recording (or silence with null). Safe to call every frame. */
+  play(song: MusicTrack | null) {
     this.wanted = song;
   }
 
@@ -262,15 +317,17 @@ export class Music {
         p.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADE);
         this.fading.push(p);
         setTimeout(() => {
+          if (p instanceof RecordingPlayer) p.stop();
           p.gain.disconnect();
           this.fading = this.fading.filter((f) => f !== p);
         }, FADE * 1000 + 300);
       }
       this.current = null;
       if (this.wanted) {
-        const player = new SongPlayer(ctx, this.bus, noiseBuffer, this.wanted);
+        const w = this.wanted;
+        const player = 'file' in w ? new RecordingPlayer(ctx, this.bus, w) : new SongPlayer(ctx, this.bus, noiseBuffer, w);
         player.gain.gain.linearRampToValueAtTime(1, ctx.currentTime + FADE);
-        this.current = { song: this.wanted, player };
+        this.current = { song: w, player };
       }
     }
     const until = ctx.currentTime + LOOKAHEAD;

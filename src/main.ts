@@ -21,6 +21,7 @@ import { buildRuinInterior, ORIGIN } from './game/level/ruinInterior';
 import { RUIN } from './game/level/layout';
 import { SPECIAL_MAX } from './game/player';
 import { CHARACTERS, type CharacterId } from './game/characters';
+import { buildRollModel } from './game/rollModel';
 import type { Kickable, Target } from './game/types';
 
 const canvas = document.getElementById('game') as HTMLCanvasElement;
@@ -198,38 +199,21 @@ canvas.addEventListener('mousedown', unlockAudio);
 window.addEventListener('keydown', unlockAudio);
 window.addEventListener('gamepadconnected', () => unlockAudio());
 
-// --- Character select ---------------------------------------------------
-// Both heroes stand by the crash site; the highlighted one strikes a pose.
-const order: CharacterId[] = ['megaman', 'roll'];
-let selected = 0;
-const previews = order.map((id, i) => {
-  const rig = CHARACTERS[id].build();
-  const x = level.spawn.x + (i === 0 ? -0.9 : 0.9);
-  rig.root.position.set(x, world.groundHeight(x, level.spawn.z), level.spawn.z);
-  rig.root.rotation.y = 0;
-  scene.add(rig.root);
-  return rig;
-});
-for (const id of order) {
-  const card = $(`card-${id}`);
-  card.innerHTML = `<div class="name">${CHARACTERS[id].name}</div><div class="tag">${CHARACTERS[id].tagline}</div>`;
-  card.addEventListener('mouseenter', () => setSelected(order.indexOf(id)));
+// --- Title screen -------------------------------------------------------
+// Zero stands by the crash site and waves until the player starts.
+const PLAYER_ID: CharacterId = 'zero';
+const preview = CHARACTERS[PLAYER_ID].build();
+preview.root.position.set(level.spawn.x, world.groundHeight(level.spawn.x, level.spawn.z), level.spawn.z);
+scene.add(preview.root);
+{
+  const card = $(`card-${PLAYER_ID}`);
+  card.innerHTML = `<div class="name">${CHARACTERS[PLAYER_ID].name}</div><div class="tag">${CHARACTERS[PLAYER_ID].tagline}</div>`;
+  card.classList.add('active');
   card.addEventListener('click', () => {
     unlockAudio();
-    setSelected(order.indexOf(id));
     startGame();
   });
 }
-function setSelected(i: number) {
-  if (i === selected) return;
-  selected = i;
-  sfx.talk();
-  refreshCards();
-}
-function refreshCards() {
-  order.forEach((id, i) => $(`card-${id}`).classList.toggle('active', i === selected));
-}
-refreshCards();
 
 type Mode = 'select' | 'play' | 'gameover' | 'victory';
 let mode: Mode = 'select';
@@ -239,24 +223,18 @@ let player: Player | null = null;
 function startGame() {
   if (mode !== 'select') return;
   mode = 'play';
-  const id = order[selected];
-  const otherId = order[1 - selected];
-  for (const r of previews) scene.remove(r.root);
+  scene.remove(preview.root);
 
-  player = new Player({ world, projectiles, effects, targets, kickables }, CHARACTERS[id]);
+  player = new Player({ world, projectiles, effects, targets, kickables }, CHARACTERS[PLAYER_ID]);
   player.place(level.spawn, level.spawnYaw);
   scene.add(player.rig.root);
   cam.yaw = level.spawnYaw;
 
-  // The other hero stays behind with the ship.
-  const companionLines =
-    otherId === 'roll'
-      ? ["I'll stay with the Flutter and start patching the hull.", 'If the market has an engine part, grab it! And try not to break anything.']
-      : ["I'll keep watch over the Flutter, Roll.", "Apple Market is just up the path. If anyone there knows engines, it's worth asking."];
+  // Roll stays behind with the ship.
   const companion = new Npc(
-    CHARACTERS[otherId].name.split(' ')[0],
-    CHARACTERS[otherId].build(),
-    companionLines,
+    'Roll',
+    buildRollModel(),
+    ["I'll stay with the Flutter and start patching the hull.", 'If the market has an engine part, grab it! And try not to break anything.'],
     level.companionSpot,
     world,
     0,
@@ -267,11 +245,10 @@ function startGame() {
 
   selectEl.hidden = true;
   hudEl.hidden = false;
-  const intro =
-    id === 'megaman'
-      ? ["The Flutter's left engine is wrecked, Mega Man. We won't be flying anywhere today.", "There's a town called Apple Market up the path to the north. See if anyone there sells parts!"]
-      : ['That landing was rough. The left engine is totally shot.', 'Apple Market is up the path to the north. Go see if you can find a replacement part, Roll!'];
-  openDialog(companion.name, intro);
+  openDialog(companion.name, [
+    "The Flutter's left engine is wrecked, Zero. We won't be flying anywhere today.",
+    "There's a town called Apple Market up the path to the north. See if anyone there sells parts!",
+  ]);
 }
 
 // --- Dialogue -----------------------------------------------------------
@@ -467,18 +444,13 @@ const idle: Partial<InputState> = {
 };
 
 function updateSelect(state: InputState, elapsed: number) {
-  if (state.left) setSelected(0);
-  if (state.right) setSelected(1);
   if (state.confirm) startGame();
   const k = Math.min(1, elapsed * 8);
-  previews.forEach((rig, i) => {
-    const active = i === selected;
-    rig.root.rotation.y = THREE.MathUtils.lerp(rig.root.rotation.y, active ? Math.sin(time * 1.5) * 0.3 : 0, k);
-    rig.armR.rotation.x = THREE.MathUtils.lerp(rig.armR.rotation.x, active ? -2.7 + Math.sin(time * 8) * 0.25 : 0, k);
-    rig.armR.rotation.z = THREE.MathUtils.lerp(rig.armR.rotation.z, active ? 0.3 : -0.12, k);
-    rig.armL.rotation.z = 0.12;
-  });
-  // Camera looks south at the pair, who face north toward it.
+  preview.root.rotation.y = Math.sin(time * 1.5) * 0.3;
+  preview.armR.rotation.x = THREE.MathUtils.lerp(preview.armR.rotation.x, -2.7 + Math.sin(time * 8) * 0.25, k);
+  preview.armR.rotation.z = 0.3;
+  preview.armL.rotation.z = 0.12;
+  // Camera looks south at Zero, who faces north toward it.
   const focus = level.spawn.clone().add(new THREE.Vector3(0, 0.9, 0));
   camera.position.set(focus.x + Math.sin(time * 0.2) * 0.3, focus.y + 0.3, focus.z + 4.6);
   camera.lookAt(focus);
